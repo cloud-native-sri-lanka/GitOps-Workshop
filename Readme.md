@@ -186,7 +186,7 @@ kind delete cluster --name gitops-demo
 
 ---
 
-# 🏢 Enterprise-Style ArgoCD Setup & Directory Structure
+#  Enterprise-Style ArgoCD Setup & Directory Structure
 
 In real-world organizations, **application code** and **Kubernetes deployment manifests** are kept in **separate repositories**.
 
