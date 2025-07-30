@@ -196,3 +196,36 @@ This separation:
 - Keeps infra changes reviewable by platform teams
 - Enables CI pipelines to manage deployment promotion
 - Allows ArgoCD to only track a **safe, manifest-only repo**
+
+
+## **Two-Repository Model**
+
+### **A. Application Code Repository**
+
+Contains:
+
+- Source code (`src/`, `services/`, etc.)
+- Dockerfile
+- `deployment/` folder (developer-owned patches: HPA, resource limits, ingress, etc.)
+
+Example:
+📁 my-service-repo
+ ├── src/
+ ├── Dockerfile
+ ├── deployment/
+ │   ├── base/                 # Base deployment manifests
+ │   │   ├── deployment.yaml
+ │   │   ├── service.yaml
+ │   │   ├── hpa.yaml
+ │   └── overlays/
+ │       ├── dev/
+ │       │   ├── kustomization.yaml
+ │       │   └── patch-deployment.yaml
+ │       ├── prod/
+ │       │   ├── kustomization.yaml
+ │       │   └── patch-deployment.yaml
+
+
+
+
+
