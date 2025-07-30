@@ -209,6 +209,7 @@ Contains:
 - `deployment/` folder (developer-owned patches: HPA, resource limits, ingress, etc.)
 
 Example:
+```
 📁 my-service-repo
  ├── src/
  ├── Dockerfile
@@ -224,6 +225,55 @@ Example:
  │       ├── prod/
  │       │   ├── kustomization.yaml
  │       │   └── patch-deployment.yaml
+
+```
+### **B. ArgoCD Manifest Repository**
+
+Contains:
+
+- **Only Kubernetes manifests** that ArgoCD will sync
+- Usually structured by environment
+- Can be auto-updated by CI/CD pipelines
+
+```
+📁 my-argocd-manifests
+ ├── dev/
+ │   └── my-service/
+ │       ├── kustomization.yaml
+ │       ├── deployment.yaml
+ │       ├── service.yaml
+ │       ├── hpa.yaml
+ ├── prod/
+ │   └── my-service/
+ │       ├── kustomization.yaml
+ │       ├── deployment.yaml
+ │       ├── service.yaml
+ │       ├── hpa.yaml
+```
+## **CI/CD Flow with ArgoCD & Kustomize**
+
+Here’s the **typical enterprise GitOps workflow**:
+
+1. **Developer Workflow**
+    - Dev writes code → commits to **code repo**
+    - Adds/updates Kubernetes patches (HPA, resource limits, env vars) in `deployment/overlays/dev/`
+    - Pushes code to a feature branch → opens Pull Request
+2. **CI Pipeline (Build & Patch)**
+    - Builds Docker image → pushes to registry (tagged with commit SHA or version)
+    - Runs `kustomize build deployment/overlays/dev/`
+        
+        → updates image tag in manifest
+        
+    - Pushes updated manifest to **ArgoCD manifest repo** under `dev/` folder
+3. **ArgoCD Sync**
+    - ArgoCD is watching the **manifest repo** (e.g., `dev/` branch)
+    - Detects the new manifest commit
+    - Automatically deploys updated service to the **dev cluster**
+4. **Promotion to Higher Environments**
+    - Once tested in `dev`, CI merges the manifest changes into `prod/`
+    - ArgoCD deploys to production
+
+
 
 
 
