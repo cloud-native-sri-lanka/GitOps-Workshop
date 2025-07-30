@@ -185,3 +185,83 @@ kind delete cluster --name gitops-demo
 ```
 
 ---
+
+Enterprise-Style ArgoCD Setup & Directory Structure
+
+In real-world organizations, application code and Kubernetes deployment manifests are kept in separate repositories.
+
+This separation:
+
+Improves security (developers can’t accidentally change production manifests)
+Keeps infra changes reviewable by platform teams
+Enables CI pipelines to manage deployment promotion
+Allows ArgoCD to only track a safe, manifest-only repo
+1️⃣ Two-Repository Model
+
+A. Application Code Repository
+Contains:
+
+Source code (src/, services/, etc.)
+Dockerfile
+deployment/ folder (developer-owned patches: HPA, resource limits, ingress, etc.)
+Example:
+
+📁 my-service-repo
+ ├── src/
+ ├── Dockerfile
+ ├── deployment/
+ │   ├── base/                 # Base deployment manifests
+ │   │   ├── deployment.yaml
+ │   │   ├── service.yaml
+ │   │   ├── hpa.yaml
+ │   └── overlays/
+ │       ├── dev/
+ │       │   ├── kustomization.yaml
+ │       │   └── patch-deployment.yaml
+ │       ├── prod/
+ │       │   ├── kustomization.yaml
+ │       │   └── patch-deployment.yaml
+B. ArgoCD Manifest Repository
+Contains:
+
+Only Kubernetes manifests that ArgoCD will sync
+Usually structured by environment
+Can be auto-updated by CI/CD pipelines
+Example:
+
+📁 my-argocd-manifests
+ ├── dev/
+ │   └── my-service/
+ │       ├── kustomization.yaml
+ │       ├── deployment.yaml
+ │       ├── service.yaml
+ │       ├── hpa.yaml
+ ├── prod/
+ │   └── my-service/
+ │       ├── kustomization.yaml
+ │       ├── deployment.yaml
+ │       ├── service.yaml
+ │       ├── hpa.yaml
+2️⃣ CI/CD Flow with ArgoCD & Kustomize
+
+Here’s the typical enterprise GitOps workflow:
+
+Developer Workflow
+Dev writes code → commits to code repo
+Adds/updates Kubernetes patches (HPA, resource limits, env vars) in deployment/overlays/dev/
+Pushes code to a feature branch → opens Pull Request
+CI Pipeline (Build & Patch)
+Builds Docker image → pushes to registry (tagged with commit SHA or version)
+Runs kustomize build deployment/overlays/dev/
+→ updates image tag in manifest
+Pushes updated manifest to ArgoCD manifest repo under dev/ folder
+ArgoCD Sync
+ArgoCD is watching the manifest repo (e.g., dev/ branch)
+Detects the new manifest commit
+Automatically deploys updated service to the dev cluster
+Promotion to Higher Environments
+Once tested in dev, CI merges the manifest changes into prod/
+ArgoCD deploys to production
+
+
+
